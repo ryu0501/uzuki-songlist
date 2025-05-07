@@ -63,14 +63,21 @@ function normalizeString(str) {
   ).toUpperCase();
 }
 
-// CSVファイルを読み込み、テーブルに追加
+// CSVを読み込み、テーブルに表示＋管理番号自動付与
 fetch('songs.csv')
   .then(response => response.text())
   .then(data => {
-    const rows = data.trim().split('\n').slice(1); // ヘッダー行をスキップ
+    const rows = data.trim().split('\n');
     const tbody = document.querySelector('#songsTable tbody');
-    rows.forEach(line => {
-      const [artist, artistKana, song, songKana, id] = line.split(',');
+    let autoId = 1;
+
+    rows.slice(1).forEach(line => {
+      const cols = line.split(',');
+      if (cols.length < 4) return;
+
+      const [artist, artistKana, song, songKana, idRaw] = cols;
+      const id = idRaw && idRaw.trim() ? idRaw.trim() : String(autoId++).padStart(3, '0');
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="artist-name">${artist}</td>
@@ -83,7 +90,7 @@ fetch('songs.csv')
     });
   });
 
-// 検索処理
+// 検索処理＋ハイライト制御
 document.getElementById('searchInput').addEventListener('keyup', function () {
   const filter = normalizeString(this.value);
   const rows = document.querySelectorAll("#songsTable tbody tr");
@@ -91,11 +98,6 @@ document.getElementById('searchInput').addEventListener('keyup', function () {
   rows.forEach(row => {
     const tds = row.getElementsByTagName("td");
     const [artistTd, artistPhoneticTd, songTd, songPhoneticTd, songIdTd] = tds;
-    const artist = normalizeString(artistTd.textContent);
-    const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
-    const song = normalizeString(songTd.textContent);
-    const songPhonetic = normalizeString(songPhoneticTd.textContent);
-    const songId = normalizeString(songIdTd.textContent);
 
     artistTd.classList.remove('highlight');
     songTd.classList.remove('highlight');
@@ -104,6 +106,12 @@ document.getElementById('searchInput').addEventListener('keyup', function () {
     if (filter === "") {
       row.style.display = "";
     } else {
+      const artist = normalizeString(artistTd.textContent);
+      const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
+      const song = normalizeString(songTd.textContent);
+      const songPhonetic = normalizeString(songPhoneticTd.textContent);
+      const songId = normalizeString(songIdTd.textContent);
+
       let match = false;
       if (artist.includes(filter) || artistPhonetic.includes(filter)) {
         artistTd.classList.add('highlight');
@@ -122,7 +130,7 @@ document.getElementById('searchInput').addEventListener('keyup', function () {
   });
 });
 
-// ソート処理（hidden列基準）
+// テーブルソート（hidden列に基づく）
 let sortDirections = {};
 function sortTable(displayColIndex) {
   const table = document.getElementById("songsTable");
