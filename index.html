@@ -2,38 +2,17 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>兎月詩 歌える曲一覧 ver.1.9</title>
+<title>兎月詩 歌える曲一覧</title>
 <style>
-  body {
-    text-align: center;
-    background-color: #ffffff;
-    margin: 0;
-    padding: 0;
-  }
-  table {
-    width: 99%;
-    border-collapse: collapse;
-    margin: 20px auto;
-    font-size: 20px;
-  }
-  th, td {
-    border: 1px solid black;
-    padding: 8px;
-    text-align: left;
-  }
-  th {
-    cursor: pointer;
-  }
+  body { text-align: center; background-color: #fff; margin: 0; padding: 0; }
+  table { width: 99%; border-collapse: collapse; margin: 20px auto; font-size: 20px; }
+  th, td { border: 1px solid black; padding: 8px; text-align: left; }
+  th { cursor: pointer; }
   .artist-name { width: 200px; }
   .song-name { width: 300px; }
   .song-id { width: 25px; }
-  .hidden {
-    display: none;
-  }
-  .highlight {
-    background-color: yellow;
-    border: 1px solid black;
-  }
+  .hidden { display: none; }
+  .highlight { background-color: yellow; border: 1px solid black; }
   #searchInput {
     margin: 20px 0;
     padding: 7px;
@@ -41,34 +20,24 @@
     font-size: 40px;
     box-sizing: border-box;
   }
-  tbody tr:nth-child(odd) {
-    background-color: #d2d2d2;
-  }
-  tbody tr:nth-child(even) {
-    background-color: #ffffff;
-  }
+  tbody tr:nth-child(odd) { background-color: #d2d2d2; }
+  tbody tr:nth-child(even) { background-color: #ffffff; }
 
-  /* レスポンシブ対応 */
-  @media (min-width: 1024px) {
-    .artist-name { width: 200px; }
-    .song-name { width: 300px; }
-  }
-  @media (min-width: 768px) and (max-width: 1023px) {
+  @media (max-width: 1023px) {
     .artist-name { width: 150px; }
     .song-name { width: 250px; }
-    table { width: 100%; }
+    table, #searchInput { width: 100%; }
   }
   @media (max-width: 767px) {
     .artist-name { width: 100px; }
     .song-name { width: 200px; }
-    table { width: 100%; }
     #searchInput { width: 80%; }
   }
 </style>
 </head>
 <body>
 
-<h2>兎月詩 歌える曲一覧 ver.1.9</h2>
+<h2>兎月詩 歌える曲一覧 ver.2.0</h2>
 <input type="text" id="searchInput" placeholder="検索...">
 
 <table id="songsTable">
@@ -82,93 +51,94 @@
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td class="artist-name">※アーティスト情報なし</td>
-      <td class="hidden">なしナシ</td>
-      <td class="song-name">いかないで</td>
-      <td class="hidden">いかないでイカナイデ</td>
-      <td class="song-id">001</td>
-    </tr>
-    <tr>
-      <td class="artist-name">※アーティスト情報なし</td>
-      <td class="hidden">なしナシ</td>
-      <td class="song-name">カーロ・ミオ・ベン</td>
-      <td class="hidden">かーろ・みお・べんカーロ・ミオ・ベン</td>
-      <td class="song-id">189</td>
-    </tr>
+    <!-- CSVからデータが自動挿入されます -->
   </tbody>
 </table>
 
 <script>
-  function normalizeString(str) {
-    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (s) {
-      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
-    }).toUpperCase();
-  }
+// 全角英数字を半角に＆大文字に変換
+function normalizeString(str) {
+  return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+    String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+  ).toUpperCase();
+}
 
-  document.getElementById('searchInput').addEventListener('keyup', function () {
-    const filter = normalizeString(this.value);
-    const rows = document.getElementById("songsTable").getElementsByTagName("tr");
-
-    for (let i = 1; i < rows.length; i++) {
-      const artistTd = rows[i].getElementsByTagName("td")[0];
-      const artistPhoneticTd = rows[i].getElementsByTagName("td")[1];
-      const songTd = rows[i].getElementsByTagName("td")[2];
-      const songPhoneticTd = rows[i].getElementsByTagName("td")[3];
-      const songIdTd = rows[i].getElementsByTagName("td")[4];
-
-      const artist = normalizeString(artistTd.textContent);
-      const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
-      const song = normalizeString(songTd.textContent);
-      const songPhonetic = normalizeString(songPhoneticTd.textContent);
-      const songId = normalizeString(songIdTd.textContent);
-
-      // ハイライトリセット
-      artistTd.classList.remove('highlight');
-      songTd.classList.remove('highlight');
-      songIdTd.classList.remove('highlight');
-
-      if (filter === "") {
-        rows[i].style.display = "";
-      } else {
-        if (artist.includes(filter) || artistPhonetic.includes(filter)) {
-          artistTd.classList.add('highlight');
-        }
-        if (song.includes(filter) || songPhonetic.includes(filter)) {
-          songTd.classList.add('highlight');
-        }
-
-        const match = (
-          artist.includes(filter) ||
-          artistPhonetic.includes(filter) ||
-          song.includes(filter) ||
-          songPhonetic.includes(filter) ||
-          songId.includes(filter)
-        );
-        rows[i].style.display = match ? "" : "none";
-      }
-    }
+// CSVファイルを読み込み、テーブルに追加
+fetch('songs.csv')
+  .then(response => response.text())
+  .then(data => {
+    const rows = data.trim().split('\n').slice(1); // ヘッダー行をスキップ
+    const tbody = document.querySelector('#songsTable tbody');
+    rows.forEach(line => {
+      const [artist, artistKana, song, songKana, id] = line.split(',');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="artist-name">${artist}</td>
+        <td class="hidden">${artistKana}</td>
+        <td class="song-name">${song}</td>
+        <td class="hidden">${songKana}</td>
+        <td class="song-id">${id}</td>
+      `;
+      tbody.appendChild(row);
+    });
   });
 
-  let sortDirections = {};
+// 検索処理
+document.getElementById('searchInput').addEventListener('keyup', function () {
+  const filter = normalizeString(this.value);
+  const rows = document.querySelectorAll("#songsTable tbody tr");
 
-  function sortTable(displayColIndex) {
-    const table = document.getElementById("songsTable");
-    const tbody = table.tBodies[0];
-    const rows = Array.from(tbody.rows);
-    const hiddenColIndex = displayColIndex + 1;
+  rows.forEach(row => {
+    const tds = row.getElementsByTagName("td");
+    const [artistTd, artistPhoneticTd, songTd, songPhoneticTd, songIdTd] = tds;
+    const artist = normalizeString(artistTd.textContent);
+    const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
+    const song = normalizeString(songTd.textContent);
+    const songPhonetic = normalizeString(songPhoneticTd.textContent);
+    const songId = normalizeString(songIdTd.textContent);
 
-    sortDirections[displayColIndex] = !sortDirections[displayColIndex];
-    const ascending = sortDirections[displayColIndex];
+    artistTd.classList.remove('highlight');
+    songTd.classList.remove('highlight');
+    songIdTd.classList.remove('highlight');
 
-    rows.sort((a, b) => {
-      const aText = a.cells[hiddenColIndex].textContent.trim();
-      const bText = b.cells[hiddenColIndex].textContent.trim();
-      return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText);
-    });
+    if (filter === "") {
+      row.style.display = "";
+    } else {
+      let match = false;
+      if (artist.includes(filter) || artistPhonetic.includes(filter)) {
+        artistTd.classList.add('highlight');
+        match = true;
+      }
+      if (song.includes(filter) || songPhonetic.includes(filter)) {
+        songTd.classList.add('highlight');
+        match = true;
+      }
+      if (songId.includes(filter)) {
+        songIdTd.classList.add('highlight');
+        match = true;
+      }
+      row.style.display = match ? "" : "none";
+    }
+  });
+});
 
-    rows.forEach(row => tbody.appendChild(row));
-  }
+// ソート処理（hidden列基準）
+let sortDirections = {};
+function sortTable(displayColIndex) {
+  const table = document.getElementById("songsTable");
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.rows);
+  const hiddenColIndex = displayColIndex + 1;
+  const ascending = !(sortDirections[displayColIndex] = !sortDirections[displayColIndex]);
+
+  rows.sort((a, b) => {
+    const aText = a.cells[hiddenColIndex].textContent.trim();
+    const bText = b.cells[hiddenColIndex].textContent.trim();
+    return ascending ? bText.localeCompare(aText) : aText.localeCompare(bText);
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+}
 </script>
 
 </body>
