@@ -1,79 +1,76 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>兎月詩 歌える曲一覧</title>
-  <style>
-    body {
-      text-align: center;
-      background-color: #fff;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<title>兎月詩 歌える曲一覧 ver.1.9</title>
+<style>
+  body {
+    text-align: center;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+  table {
+    width: 99%;
+    border-collapse: collapse;
+    margin: 20px auto;
+    font-size: 20px;
+  }
+  th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    cursor: pointer;
+  }
+  .artist-name { width: 200px; }
+  .song-name { width: 300px; }
+  .song-id { width: 25px; }
+  .hidden {
+    display: none;
+  }
+  .highlight {
+    background-color: yellow;
+    border: 1px solid black;
+  }
+  #searchInput {
+    margin: 20px 0;
+    padding: 7px;
+    width: 50%;
+    font-size: 40px;
+    box-sizing: border-box;
+  }
+  tbody tr:nth-child(odd) {
+    background-color: #d2d2d2;
+  }
+  tbody tr:nth-child(even) {
+    background-color: #ffffff;
+  }
 
-    h2 {
-      margin-top: 20px;
-    }
-
-    table {
-      width: 99%;
-      border-collapse: collapse;
-      margin: 20px auto;
-      font-size: 20px;
-    }
-
-    th, td {
-      border: 1px solid black;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .highlight {
-      background-color: yellow;
-      border: 1px solid black;
-    }
-
-    .artist-name {
-      width: 200px;
-    }
-
-    .song-name {
-      width: 300px;
-    }
-
-    .song-id {
-      width: 50px;
-    }
-
-    #searchInput {
-      margin: 20px 0;
-      padding: 7px;
-      width: 50%;
-      font-size: 40px;
-      box-sizing: border-box;
-    }
-
-    /* モバイル対応 */
-    @media (max-width: 767px) {
-      .artist-name { width: 100px; }
-      .song-name { width: 200px; }
-      table { width: 100%; }
-      #searchInput { width: 80%; }
-    }
-  </style>
+  /* レスポンシブ対応 */
+  @media (min-width: 1024px) {
+    .artist-name { width: 200px; }
+    .song-name { width: 300px; }
+  }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .artist-name { width: 150px; }
+    .song-name { width: 250px; }
+    table { width: 100%; }
+  }
+  @media (max-width: 767px) {
+    .artist-name { width: 100px; }
+    .song-name { width: 200px; }
+    table { width: 100%; }
+    #searchInput { width: 80%; }
+  }
+</style>
 </head>
 <body>
 
-<h2>兎月詩 歌える曲一覧</h2>
+<h2>兎月詩 歌える曲一覧 ver.1.9</h2>
 <input type="text" id="searchInput" placeholder="検索...">
+
 <table id="songsTable">
   <thead>
     <tr>
@@ -84,67 +81,94 @@
       <th class="song-id" onclick="sortTable(4)">管理番号</th>
     </tr>
   </thead>
-  <tbody></tbody>
+  <tbody>
+    <tr>
+      <td class="artist-name">※アーティスト情報なし</td>
+      <td class="hidden">なしナシ</td>
+      <td class="song-name">いかないで</td>
+      <td class="hidden">いかないでイカナイデ</td>
+      <td class="song-id">001</td>
+    </tr>
+    <tr>
+      <td class="artist-name">※アーティスト情報なし</td>
+      <td class="hidden">なしナシ</td>
+      <td class="song-name">カーロ・ミオ・ベン</td>
+      <td class="hidden">かーろ・みお・べんカーロ・ミオ・ベン</td>
+      <td class="song-id">189</td>
+    </tr>
+  </tbody>
 </table>
 
 <script>
   function normalizeString(str) {
-    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).toUpperCase();
+    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (s) {
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    }).toUpperCase();
   }
 
-  document.getElementById("searchInput").addEventListener("input", function () {
+  document.getElementById('searchInput').addEventListener('keyup', function () {
     const filter = normalizeString(this.value);
-    const rows = document.querySelector("#songsTable tbody").rows;
+    const rows = document.getElementById("songsTable").getElementsByTagName("tr");
 
-    for (const row of rows) {
-      const [artistTd, artistPhoneticTd, songTd, songPhoneticTd, songIdTd] = row.cells;
+    for (let i = 1; i < rows.length; i++) {
+      const artistTd = rows[i].getElementsByTagName("td")[0];
+      const artistPhoneticTd = rows[i].getElementsByTagName("td")[1];
+      const songTd = rows[i].getElementsByTagName("td")[2];
+      const songPhoneticTd = rows[i].getElementsByTagName("td")[3];
+      const songIdTd = rows[i].getElementsByTagName("td")[4];
+
       const artist = normalizeString(artistTd.textContent);
       const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
       const song = normalizeString(songTd.textContent);
       const songPhonetic = normalizeString(songPhoneticTd.textContent);
       const songId = normalizeString(songIdTd.textContent);
 
-      const match = artist.includes(filter) || artistPhonetic.includes(filter)
-                 || song.includes(filter) || songPhonetic.includes(filter)
-                 || songId.includes(filter);
+      // ハイライトリセット
+      artistTd.classList.remove('highlight');
+      songTd.classList.remove('highlight');
+      songIdTd.classList.remove('highlight');
 
-      row.style.display = match ? "" : "none";
-      artistTd.classList.toggle("highlight", match && (artist.includes(filter) || artistPhonetic.includes(filter)));
-      songTd.classList.toggle("highlight", match && (song.includes(filter) || songPhonetic.includes(filter)));
+      if (filter === "") {
+        rows[i].style.display = "";
+      } else {
+        if (artist.includes(filter) || artistPhonetic.includes(filter)) {
+          artistTd.classList.add('highlight');
+        }
+        if (song.includes(filter) || songPhonetic.includes(filter)) {
+          songTd.classList.add('highlight');
+        }
+
+        const match = (
+          artist.includes(filter) ||
+          artistPhonetic.includes(filter) ||
+          song.includes(filter) ||
+          songPhonetic.includes(filter) ||
+          songId.includes(filter)
+        );
+        rows[i].style.display = match ? "" : "none";
+      }
     }
   });
 
-  function sortTable(n) {
+  let sortDirections = {};
+
+  function sortTable(displayColIndex) {
     const table = document.getElementById("songsTable");
-    const rows = Array.from(table.tBodies[0].rows);
-    rows.sort((a, b) => a.cells[n].textContent.localeCompare(b.cells[n].textContent));
-    rows.forEach(row => table.tBodies[0].appendChild(row));
-  }
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    const hiddenColIndex = displayColIndex + 1;
 
-  function loadCSV() {
-    fetch("songs.csv")
-      .then(response => response.text())
-      .then(csv => {
-        const lines = csv.trim().split("\n").slice(1); // Skip header
-        const tbody = document.querySelector("#songsTable tbody");
-        tbody.innerHTML = "";
-        lines.forEach((line, index) => {
-          const [artist, artistPhonetic, song, songPhonetic] = line.split(",");
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="artist-name">${artist}</td>
-            <td class="hidden">${artistPhonetic}</td>
-            <td class="song-name">${song}</td>
-            <td class="hidden">${songPhonetic}</td>
-            <td class="song-id">${String(index + 1).padStart(3, "0")}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      });
-  }
+    sortDirections[displayColIndex] = !sortDirections[displayColIndex];
+    const ascending = sortDirections[displayColIndex];
 
-  loadCSV();
+    rows.sort((a, b) => {
+      const aText = a.cells[hiddenColIndex].textContent.trim();
+      const bText = b.cells[hiddenColIndex].textContent.trim();
+      return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
 </script>
 
 </body>
