@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>兎月詩 歌える曲一覧</title>
-<style>
-  body { text-align: center; background-color: #fff; margin: 0; padding: 0; }
-  table { width: 99%; border-collapse: collapse; margin: 20px auto; font-size: 20px; }
-  th, td { border: 1px solid black; padding: 8px; text-align: left; }
-  th { cursor: pointer; }
-  .artist-name { width: 200px; }
-  .song-name { width: 300px; }
-  .song-id { width: 25px; }
-  .hidden { display: none; }
-  .highlight { background-color: yellow; border: 1px solid black; }
-  #searchInput {
-    margin: 20px 0;
-    padding: 7px;
-    width: 50%;
-    font-size: 40px;
-    box-sizing: border-box;
-  }
-  tbody tr:nth-child(odd) { background-color: #d2d2d2; }
-  tbody tr:nth-child(even) { background-color: #ffffff; }
+  <meta charset="UTF-8">
+  <title>兎月詩 歌える曲一覧</title>
+  <style>
+    body { text-align: center; background-color: #fff; margin: 0; padding: 0; }
+    table { width: 99%; border-collapse: collapse; margin: 20px auto; font-size: 20px; }
+    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+    th { cursor: pointer; }
+    .artist-name { width: 200px; }
+    .song-name { width: 300px; }
+    .song-id { width: 25px; }
+    .hidden { display: none; }
+    .highlight { background-color: yellow; border: 1px solid black; }
+    #searchInput {
+      margin: 20px 0;
+      padding: 7px;
+      width: 50%;
+      font-size: 40px;
+      box-sizing: border-box;
+    }
+    tbody tr:nth-child(odd) { background-color: #d2d2d2; }
+    tbody tr:nth-child(even) { background-color: #ffffff; }
 
-  @media (max-width: 1023px) {
-    .artist-name { width: 150px; }
-    .song-name { width: 250px; }
-    table, #searchInput { width: 100%; }
-  }
-  @media (max-width: 767px) {
-    .artist-name { width: 100px; }
-    .song-name { width: 200px; }
-    #searchInput { width: 80%; }
-  }
-</style>
+    @media (max-width: 1023px) {
+      .artist-name { width: 150px; }
+      .song-name { width: 250px; }
+      table, #searchInput { width: 100%; }
+    }
+    @media (max-width: 767px) {
+      .artist-name { width: 100px; }
+      .song-name { width: 200px; }
+      #searchInput { width: 80%; }
+    }
+  </style>
 </head>
 <body>
 
-<h2>兎月詩 歌える曲一覧 ver.2.0</h2>
+<h2>兎月詩 歌える曲一覧 ver.2.1</h2>
 <input type="text" id="searchInput" placeholder="検索...">
 
 <table id="songsTable">
@@ -48,6 +48,7 @@
       <th class="song-name" onclick="sortTable(2)">曲名</th>
       <th class="hidden">曲名読み仮名</th>
       <th class="song-id" onclick="sortTable(4)">管理番号</th>
+      <th class="hidden">管理番号（ソート用）</th>
     </tr>
   </thead>
   <tbody>
@@ -63,7 +64,7 @@ function normalizeString(str) {
   ).toUpperCase();
 }
 
-// CSVを読み込み、テーブルに表示＋管理番号自動付与
+// CSV読み込み・管理番号自動付与
 fetch('songs.csv')
   .then(response => response.text())
   .then(data => {
@@ -72,11 +73,8 @@ fetch('songs.csv')
     let autoId = 1;
 
     rows.slice(1).forEach(line => {
-      const cols = line.split(',');
-      if (cols.length < 4) return;
-
-      const [artist, artistKana, song, songKana, idRaw] = cols;
-      const id = idRaw && idRaw.trim() ? idRaw.trim() : String(autoId++).padStart(3, '0');
+      const [artist, artistKana, song, songKana] = line.split(',');
+      const id = String(autoId++).padStart(3, '0');
 
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -85,44 +83,44 @@ fetch('songs.csv')
         <td class="song-name">${song}</td>
         <td class="hidden">${songKana}</td>
         <td class="song-id">${id}</td>
+        <td class="hidden">${id}</td>
       `;
       tbody.appendChild(row);
     });
   });
 
-// 検索処理＋ハイライト制御
+// 検索とハイライト
 document.getElementById('searchInput').addEventListener('keyup', function () {
   const filter = normalizeString(this.value);
   const rows = document.querySelectorAll("#songsTable tbody tr");
 
   rows.forEach(row => {
-    const tds = row.getElementsByTagName("td");
-    const [artistTd, artistPhoneticTd, songTd, songPhoneticTd, songIdTd] = tds;
+    const [artistTd, artistKanaTd, songTd, songKanaTd, idTd] = row.getElementsByTagName("td");
 
     artistTd.classList.remove('highlight');
     songTd.classList.remove('highlight');
-    songIdTd.classList.remove('highlight');
+    idTd.classList.remove('highlight');
 
     if (filter === "") {
       row.style.display = "";
     } else {
       const artist = normalizeString(artistTd.textContent);
-      const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
+      const artistKana = normalizeString(artistKanaTd.textContent);
       const song = normalizeString(songTd.textContent);
-      const songPhonetic = normalizeString(songPhoneticTd.textContent);
-      const songId = normalizeString(songIdTd.textContent);
+      const songKana = normalizeString(songKanaTd.textContent);
+      const id = normalizeString(idTd.textContent);
 
       let match = false;
-      if (artist.includes(filter) || artistPhonetic.includes(filter)) {
+      if (artist.includes(filter) || artistKana.includes(filter)) {
         artistTd.classList.add('highlight');
         match = true;
       }
-      if (song.includes(filter) || songPhonetic.includes(filter)) {
+      if (song.includes(filter) || songKana.includes(filter)) {
         songTd.classList.add('highlight');
         match = true;
       }
-      if (songId.includes(filter)) {
-        songIdTd.classList.add('highlight');
+      if (id.includes(filter)) {
+        idTd.classList.add('highlight');
         match = true;
       }
       row.style.display = match ? "" : "none";
@@ -130,7 +128,7 @@ document.getElementById('searchInput').addEventListener('keyup', function () {
   });
 });
 
-// テーブルソート（hidden列に基づく）
+// ソート処理（hidden列基準）
 let sortDirections = {};
 function sortTable(displayColIndex) {
   const table = document.getElementById("songsTable");
@@ -142,7 +140,7 @@ function sortTable(displayColIndex) {
   rows.sort((a, b) => {
     const aText = a.cells[hiddenColIndex].textContent.trim();
     const bText = b.cells[hiddenColIndex].textContent.trim();
-    return ascending ? bText.localeCompare(aText) : aText.localeCompare(bText);
+    return ascending ? bText.localeCompare(aText, 'ja') : aText.localeCompare(bText, 'ja');
   });
 
   rows.forEach(row => tbody.appendChild(row));
