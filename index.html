@@ -4,55 +4,15 @@
   <meta charset="UTF-8">
   <title>兎月詩 歌える曲一覧</title>
   <style>
-    body {
-      text-align: center;
-      background-color: #fff;
-      margin: 0;
-      padding: 0;
-    }
-
-    h2 {
-      margin-top: 20px;
-    }
-
-    table {
-      width: 99%;
-      border-collapse: collapse;
-      margin: 20px auto;
-      font-size: 20px;
-    }
-
-    th, td {
-      border: 1px solid black;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .highlight {
-      background-color: yellow;
-      border: 1px solid black;
-    }
-
-    .artist-name {
-      width: 200px;
-    }
-
-    .song-name {
-      width: 300px;
-    }
-
-    .song-id {
-      width: 50px;
-    }
-
+    body { text-align: center; background-color: #fff; margin: 0; padding: 0; }
+    table { width: 99%; border-collapse: collapse; margin: 20px auto; font-size: 20px; }
+    th, td { border: 1px solid black; padding: 8px; text-align: left; }
+    th { cursor: pointer; }
+    .artist-name { width: 200px; }
+    .song-name { width: 300px; }
+    .song-id { width: 25px; }
+    .hidden { display: none; }
+    .highlight { background-color: yellow; border: 1px solid black; }
     #searchInput {
       margin: 20px 0;
       padding: 7px;
@@ -60,20 +20,26 @@
       font-size: 40px;
       box-sizing: border-box;
     }
+    tbody tr:nth-child(odd) { background-color: #d2d2d2; }
+    tbody tr:nth-child(even) { background-color: #ffffff; }
 
-    /* モバイル対応 */
+    @media (max-width: 1023px) {
+      .artist-name { width: 150px; }
+      .song-name { width: 250px; }
+      table, #searchInput { width: 100%; }
+    }
     @media (max-width: 767px) {
       .artist-name { width: 100px; }
       .song-name { width: 200px; }
-      table { width: 100%; }
       #searchInput { width: 80%; }
     }
   </style>
 </head>
 <body>
 
-<h2>兎月詩 歌える曲一覧</h2>
+<h2>兎月詩 歌える曲一覧 ver.2.1</h2>
 <input type="text" id="searchInput" placeholder="検索...">
+
 <table id="songsTable">
   <thead>
     <tr>
@@ -82,69 +48,103 @@
       <th class="song-name" onclick="sortTable(2)">曲名</th>
       <th class="hidden">曲名読み仮名</th>
       <th class="song-id" onclick="sortTable(4)">管理番号</th>
+      <th class="hidden">管理番号（ソート用）</th>
     </tr>
   </thead>
-  <tbody></tbody>
+  <tbody>
+    <!-- CSVからデータが自動挿入されます -->
+  </tbody>
 </table>
 
 <script>
-  function normalizeString(str) {
-    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
-      String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).toUpperCase();
-  }
+// 全角英数字を半角に＆大文字に変換
+function normalizeString(str) {
+  return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s =>
+    String.fromCharCode(s.charCodeAt(0) - 0xFEE0)
+  ).toUpperCase();
+}
 
-  document.getElementById("searchInput").addEventListener("input", function () {
-    const filter = normalizeString(this.value);
-    const rows = document.querySelector("#songsTable tbody").rows;
+// CSV読み込み・管理番号自動付与
+fetch('songs.csv')
+  .then(response => response.text())
+  .then(data => {
+    const rows = data.trim().split('\n');
+    const tbody = document.querySelector('#songsTable tbody');
+    let autoId = 1;
 
-    for (const row of rows) {
-      const [artistTd, artistPhoneticTd, songTd, songPhoneticTd, songIdTd] = row.cells;
-      const artist = normalizeString(artistTd.textContent);
-      const artistPhonetic = normalizeString(artistPhoneticTd.textContent);
-      const song = normalizeString(songTd.textContent);
-      const songPhonetic = normalizeString(songPhoneticTd.textContent);
-      const songId = normalizeString(songIdTd.textContent);
+    rows.slice(1).forEach(line => {
+      const [artist, artistKana, song, songKana] = line.split(',');
+      const id = String(autoId++).padStart(3, '0');
 
-      const match = artist.includes(filter) || artistPhonetic.includes(filter)
-                 || song.includes(filter) || songPhonetic.includes(filter)
-                 || songId.includes(filter);
-
-      row.style.display = match ? "" : "none";
-      artistTd.classList.toggle("highlight", match && (artist.includes(filter) || artistPhonetic.includes(filter)));
-      songTd.classList.toggle("highlight", match && (song.includes(filter) || songPhonetic.includes(filter)));
-    }
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="artist-name">${artist}</td>
+        <td class="hidden">${artistKana}</td>
+        <td class="song-name">${song}</td>
+        <td class="hidden">${songKana}</td>
+        <td class="song-id">${id}</td>
+        <td class="hidden">${id}</td>
+      `;
+      tbody.appendChild(row);
+    });
   });
 
-  function sortTable(n) {
-    const table = document.getElementById("songsTable");
-    const rows = Array.from(table.tBodies[0].rows);
-    rows.sort((a, b) => a.cells[n].textContent.localeCompare(b.cells[n].textContent));
-    rows.forEach(row => table.tBodies[0].appendChild(row));
-  }
+// 検索とハイライト
+document.getElementById('searchInput').addEventListener('keyup', function () {
+  const filter = normalizeString(this.value);
+  const rows = document.querySelectorAll("#songsTable tbody tr");
 
-  function loadCSV() {
-    fetch("songs.csv")
-      .then(response => response.text())
-      .then(csv => {
-        const lines = csv.trim().split("\n").slice(1); // Skip header
-        const tbody = document.querySelector("#songsTable tbody");
-        tbody.innerHTML = "";
-        lines.forEach((line, index) => {
-          const [artist, artistPhonetic, song, songPhonetic] = line.split(",");
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="artist-name">${artist}</td>
-            <td class="hidden">${artistPhonetic}</td>
-            <td class="song-name">${song}</td>
-            <td class="hidden">${songPhonetic}</td>
-            <td class="song-id">${String(index + 1).padStart(3, "0")}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      });
-  }
+  rows.forEach(row => {
+    const [artistTd, artistKanaTd, songTd, songKanaTd, idTd] = row.getElementsByTagName("td");
 
-  loadCSV();
+    artistTd.classList.remove('highlight');
+    songTd.classList.remove('highlight');
+    idTd.classList.remove('highlight');
+
+    if (filter === "") {
+      row.style.display = "";
+    } else {
+      const artist = normalizeString(artistTd.textContent);
+      const artistKana = normalizeString(artistKanaTd.textContent);
+      const song = normalizeString(songTd.textContent);
+      const songKana = normalizeString(songKanaTd.textContent);
+      const id = normalizeString(idTd.textContent);
+
+      let match = false;
+      if (artist.includes(filter) || artistKana.includes(filter)) {
+        artistTd.classList.add('highlight');
+        match = true;
+      }
+      if (song.includes(filter) || songKana.includes(filter)) {
+        songTd.classList.add('highlight');
+        match = true;
+      }
+      if (id.includes(filter)) {
+        idTd.classList.add('highlight');
+        match = true;
+      }
+      row.style.display = match ? "" : "none";
+    }
+  });
+});
+
+// ソート処理（hidden列基準）
+let sortDirections = {};
+function sortTable(displayColIndex) {
+  const table = document.getElementById("songsTable");
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.rows);
+  const hiddenColIndex = displayColIndex + 1;
+  const ascending = !(sortDirections[displayColIndex] = !sortDirections[displayColIndex]);
+
+  rows.sort((a, b) => {
+    const aText = a.cells[hiddenColIndex].textContent.trim();
+    const bText = b.cells[hiddenColIndex].textContent.trim();
+    return ascending ? bText.localeCompare(aText, 'ja') : aText.localeCompare(bText, 'ja');
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+}
 </script>
 
 </body>
